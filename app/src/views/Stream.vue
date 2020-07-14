@@ -26,6 +26,7 @@
       <div v-if="channel" class="columns">
         <div class="column is-8">
           <iframe
+            v-if="enableEmbeds"
             :style="{height: '500px', width: '100%'}"
             :id="channel.login"
             :src="`https://player.twitch.tv/?channel=${channel.login}&parent=localhost&muted=false`"
@@ -38,6 +39,7 @@
         </div>
         <div class="column is-4">
           <iframe
+            v-if="enableEmbeds"
             :style="{height: '500px', width: '100%'}"
             :id="channel.login"
             :src="`https://www.twitch.tv/embed/${channel.login}/chat?parent=localhost`"
@@ -92,6 +94,7 @@ export default {
     }
 
     try {
+      console.log(window.location.href);
       parseTokenFromRedirect(to.hash);
     } catch (e) {
       console.error(e);
@@ -101,8 +104,9 @@ export default {
 
   data() {
     return {
+      enableEmbeds: false, // for debug only
       loggedIn: !!sessionStorage.twitchOAuthToken,
-      channelId: sessionStorage.twitchFavouriteChannel,
+      channelSlug: sessionStorage.twitchFavouriteChannel,
       channel: null,
       error: null,
       messages: [],
@@ -110,7 +114,7 @@ export default {
   },
 
   async created() {
-    if (!this.channelId) {
+    if (!this.channelSlug) {
       this.error = 'No channel is selected';
       return;
     }
@@ -125,15 +129,14 @@ export default {
       this.error = 'Channel not found';
     }
 
-    // TODO:
-    // this.registerSocketIo();
+    this.registerSocketIo();
   },
 
   methods: {
     async loadChannelData() {
       const response = await axios.get('https://api.twitch.tv/helix/users', {
         params: {
-          login: this.channelId,
+          login: this.channelSlug,
         },
         headers: {
           Authorization: `Bearer ${sessionStorage.twitchOAuthToken}`,
@@ -144,9 +147,15 @@ export default {
       return response.data.data[0] || null;
     },
     registerSocketIo() {
-      const socket = io();
+      const socket = io({
+        autoConnect: true,
+      });
 
-      socket.on('message', (message) => {
+      socket.on('connect', () => {
+        socket.emit('twitch_subscribe', this.channel.id);
+      });
+
+      socket.on('twitch_event', (message) => {
         this.messages.push(JSON.parse(message));
       });
 
