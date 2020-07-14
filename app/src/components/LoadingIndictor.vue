@@ -11,9 +11,9 @@ export default {
     },
   },
   created() {
-    const id = `lds-spinner-${(Math.random() * 1000).toFixed()}`;
+    const id = `loading-indicator-${(Math.random() * 1000).toFixed()}`;
     const htmlString = `
-  <div class="lds-spinner" id="${id}">
+  <div class="lds-spinner">
       <div></div>
       <div></div>
       <div></div>
@@ -29,6 +29,7 @@ export default {
 </div>`;
 
     const div = document.createElement('div');
+    div.id = id;
     div.classList.add('loading-indicator', ...this.classList);
     div.innerHTML = htmlString.trim();
 
