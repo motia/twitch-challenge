@@ -64,14 +64,14 @@ export default {
         throw new Error('Channel should not be empty');
       }
 
-      const redirectURI = `${window.location.protocol}//${window.location.host}/inspire`;
+      const redirectURI = `${window.location.protocol}//${window.location.host}/stream`;
       const scope = [
-        'user:read:email',
-        'bits:read',
-        'chat:edit',
-        'chat:read',
-        'whispers:edit',
-        'whispers:read',
+        // 'user:read:email',
+        // 'bits:read',
+        // 'chat:edit',
+        // 'chat:read',
+        // 'whispers:edit',
+        // 'whispers:read',
       ].join('+');
 
       sessionStorage.twitchFavouriteChannel = this.channel;
