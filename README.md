@@ -25,20 +25,24 @@ The website can be simply deployed to S3 and additionally Cloudfront
 
 # Scaling:
 For scaling, we will have to switch to a serverless architecture.
-This approach is easier to scale as to be easier to maintain once got right.
+This approach will be easier to scale as we won't have to manage servers.
 
-For the code, it will be simple to swap the services as their are abstracted with interfaces.
+It should be simple to migrate to the other architecture as the current code has as I split the code to map into AWS service units and separated the infrastructure from the logic.
 
-## The services implemntation in AWS
+## Subscription
+Clean up subscriptions
+
+
+## The services implementation in AWS
 - Websockets server Interface: AWS API gateway websockets
 - Webhook Subscriptions Service: AWS Lambda
 - Webhook Server: AWS Lambda with public access
 - Authentication: either as a Lambda or using AWS Cognito with the Twitch OpenId as a user pool.
 
 ## Scaling the database
-The database has one table which can grow large because of many inserts. As the records are timestamped, we can  shard the table by ranges of the columns (`created_at ASC`, `streamer_name`, `event_type`).
+The `events` table which can grow large because of many inserts. As the records are timestamped, we can shard the table by partition the table by range(`created_at ASC`, `streamer_name`, `event_type`).
 
-As these table will be readonly (the new events are always added with `created_at` as the current timestamp, hence added into another table), we can add a table `events_${MAX_TIMESTAMP}` with the columns (`streamer_name`, `event_type`, `event_count`).
+Also, as these table will be readonly (the new events are always added with `created_at` as the current timestamp, hence added into another table), we can add a table `events_${MAX_TIMESTAMP}` with the columns (`streamer_name`, `event_type`, `event_count`).
  
 With this design, the desired count queries can be computed by summing the counts of relevant events in the archive tables and the result of the query of their count in the.
 For example, the count of events for the user `A` when we have the archived tables `events_1000`, `events_2000` and the current table `events_3000`:
@@ -52,3 +56,5 @@ select (
 ```
 
 For deployment and configuration we can use Serverless (https://www.serverless.com).
+
+> The queries to insert and search the events are in the events table are in /backend/src/EventsRepository.ts

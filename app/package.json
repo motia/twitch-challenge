@@ -1,9 +1,10 @@
 {
-  "name": "app",
+  "name": "twitch-events-challenge",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
+    "dev": "vue-cli-service serve --port 3000",
+    "serve": "vue-cli-service serve --port 3000",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
@@ -12,7 +13,8 @@
     "core-js": "^3.6.5",
     "socket.io-client": "^2.3.0",
     "vue": "^2.6.11",
-    "vue-router": "^3.2.0"
+    "vue-router": "^3.2.0",
+    "vuex": "^3.5.1"
   },
   "devDependencies": {
     "@types/socket.io-client": "^1.4.33",

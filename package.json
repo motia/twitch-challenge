@@ -1,0 +1,11 @@
+{
+  "name": "monorepo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/motia/twitch-challenge.git",
+  "author": "Mouti'a Benachour <motie.benachour@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^8.2.0"
+  }
+}

@@ -10,8 +10,8 @@
           </div> -->
 
           <form
-            @submit.prevent="attemptLogin"
             class="card-content has-text-centered"
+            @submit.prevent="attemptLogin"
           >
             <div class="message">
               Enter your favourite twitch channel and click Login
@@ -23,12 +23,27 @@
                     twitch/
                   </a>
                 </p>
-                <input class="input" v-model="channel" required />
+                <div class="control is-expanded">
+                  <input v-model="channel" class="input" required>
+                </div>
               </div>
             </div>
-            <div style="margin-top: 8px;">
-              <button class="button is-primary is-rounded">
-                Login with Twitch
+            <div style="margin-top: 16px;">
+              <button class="button is-rounded is-primary" type="submit">
+                <template v-if="loggedIn">
+                  Join stream
+                </template>
+                <template v-else>
+                  Login with Twitch
+                </template>
+              </button>
+            </div>
+            <div v-if="loggedIn" style="margin-top: 16px;">
+              <button class="button is-small is-info is-inverted is-text"
+                type="button"
+                @click="logout"
+              >
+                Logout
               </button>
             </div>
           </form>
@@ -39,6 +54,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+import auth from '../auth';
 // Source: https://www.thepolyglotdeveloper.com/2015/03/create-a-random-nonce-string-using-javascript/
 function nonce(length) {
   let text = '';
@@ -54,31 +71,50 @@ export default {
 
   data() {
     return {
-      channel: sessionStorage.twitchFavouriteChannel || '' || 'benjyfishy',
+      channel: this.$store.state.userConfig.favoriteStreamerUserName || '' || 'benjyfishy',
     };
   },
 
+  computed: {
+    loggedIn() {
+      return !!this.$store.state.userConfig.twitchOAuthToken;
+    },
+  },
+
   methods: {
+    logout() {
+      auth.logout();
+      axios.delete('/api/subscription');
+    },
     attemptLogin() {
       if (!this.channel) {
         throw new Error('Channel should not be empty');
       }
 
-      const redirectURI = `${window.location.protocol}//${window.location.host}/stream`;
+      // keep date for posterior state
+      this.$store.commit('updateUserConfig', {
+        favoriteStreamerUserName: this.channel,
+      });
+
+      if (this.loggedIn) {
+        this.$router.push('/stream');
+        return;
+      }
+
+      const redirectURI = `${window.location.protocol}//${window.location.host}/callback`;
       const scope = [
-        // 'user:read:email',
-        // 'bits:read',
-        // 'chat:edit',
-        // 'chat:read',
-        // 'whispers:edit',
-        // 'whispers:read',
+        'user:read:email',
+        'bits:read',
+        'chat:edit',
+        'chat:read',
+        'whispers:edit',
+        'whispers:read',
       ].join('+');
 
-      sessionStorage.twitchFavouriteChannel = this.channel;
       sessionStorage.twitchOAuthState = nonce(15);
 
       window.location = `${'https://api.twitch.tv/kraken/oauth2/authorize'
-        + '?response_type=token'
+        + '?response_type=code'
         + '&client_id='}${process.env.VUE_APP_TWITCH_CLIENT_ID
       }&redirect_uri=${redirectURI
       }&state=${sessionStorage.twitchOAuthState
