@@ -1,5 +1,5 @@
 import { Pool, QueryResult } from 'pg';
-import { TwitchUserId, BroadcastEvent } from './types';
+import { BroadcastEvent } from './types';
 import { promisify } from 'util';
 
 type EventsCountByTypeAndStreamer = {[streamerName: string]: {[eventType: string]: number}};
@@ -7,7 +7,7 @@ type EventsCountByTypeAndStreamer = {[streamerName: string]: {[eventType: string
 export class EventsRepository {
   constructor(private pgPool: Pool){}
 
-  async saveEvents(streamerName: TwitchUserId, event: BroadcastEvent): Promise<void> {
+  async saveEvents(event: BroadcastEvent): Promise<void> {
 
     const query = `insert into events (streamer_name, event_type, viewer_name, created_at)
     SELECT $1, $2, subscriptions.viewer_name, $3 
@@ -15,7 +15,7 @@ export class EventsRepository {
 
     const values = [
         event.streamerName, event.eventType,
-        event.createdAt, streamerName
+        event.createdAt, event.streamerName
     ];
     await this.query(query, values);
   }

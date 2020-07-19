@@ -2,7 +2,7 @@ import * as socketIo from 'socket.io';
 import { IWebhooksSubscriber, IBroadcaster, IStartableService, ISubscriptionGuard } from './types';
 
 const validatestreamerName = (streamerName: string | number) => {
-    return !!streamerName;
+    return !!streamerName && typeof streamerName === 'string';
 };
 
 export const createEventBroacaster = function(
@@ -54,8 +54,8 @@ export const createEventBroacaster = function(
             io.listen(port);
         },
         close: async () => { io.close(); },
-        broadcast (streamerName, payload) {
-            io.to(`channel.${streamerName}`).emit('twitch_event', payload);
+        broadcast (payload) {
+            io.to(`channel.${payload.streamerName}`).emit('twitch_event', payload);
         },
     };
 };

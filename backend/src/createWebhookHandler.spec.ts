@@ -36,7 +36,6 @@ describe('test handleNotification', function () {
 
     it('broadcasts valid follow event', async function() {
         let event: BroadcastEvent | null = null;
-        let channel = '';
         let status = -1;
         await  handleNotification(
             dummyRepo,
@@ -45,11 +44,10 @@ describe('test handleNotification', function () {
             { 'x-hub-signature': dummyWebhookEvent[0] },
             dummyWebhookEvent[1],
             st => {status = st;},
-            (c, payload) => { event = payload; channel = c; },
+            payload => { event = payload; },
         );
 
         strictEqual(status, 202);
-        strictEqual(channel, 'amar');
         if(!event) {
             fail('Event shouldnt be null');
         }

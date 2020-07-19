@@ -55,7 +55,6 @@ export async function handleNotification(
 ): Promise<void>{
     const webhook = await webhookRepo.findWebhook(webhookId);
     if (webhook) {
-        const { streamerName: channel } = webhook;
         respond(202, undefined);
 
         if (parseSubscription(
@@ -127,7 +126,7 @@ export async function handleNotification(
                 console.warn('Invalid webhook type');
             }
             if (payload) {
-                onNotification(channel, payload);
+                onNotification(payload);
             }
         } else {
             console.warn(

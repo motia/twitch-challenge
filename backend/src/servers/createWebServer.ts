@@ -85,7 +85,7 @@ export const createWebServer = function(
   // TODO: move to a separate service
   // authorize websockets
   app.get('/subscriptions/authorize', async function (req, res) {
-    const {status, data } = await handleSubscriptionAuthorization({
+    const { status, data } = await handleSubscriptionAuthorization({
       secret: req.query.secret as string,
       id: req.query.id as string,
     }, subscriptionRepository);

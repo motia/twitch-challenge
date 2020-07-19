@@ -28,7 +28,7 @@ describe('insert events', function() {
             ]);
 
             const repo = new EventsRepository(client as any as Pool);
-            await repo.saveEvents('streamer1', { streamerName, eventType: 'follow', createdAt: new Date() });
+            await repo.saveEvents({ streamerName, eventType: 'follow', createdAt: new Date() });
 
             const savedEvents = await client.query<{ viewer_name: string }>(
                 'SELECT viewer_name FROM events WHERE streamer_name = $1 ORDER BY viewer_name ASC',

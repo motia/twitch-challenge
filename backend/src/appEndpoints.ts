@@ -168,7 +168,7 @@ export const handleSubscriptionAuthorization = async function(
   }
   const subscription = await subscriptionRepository.findSubscription(id);
 
-  if (subscription?.secret === secret) {
+  if (secret && subscription && subscription?.secret === secret) {
     return { data: { authorized: true, streamerName: subscription.streamerName }, status: 200 };
   }
 

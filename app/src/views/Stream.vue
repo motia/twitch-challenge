@@ -61,6 +61,7 @@
               </div>
             </div>
             <div class="card-content">
+              {{ messages }}
               <!-- TODO: Add events here -->
             </div>
           </div>
@@ -87,7 +88,7 @@ export default {
 
   data() {
     return {
-      enableEmbeds: true, // for debug only
+      enableEmbeds: false, // true, // for debug only
       error: null,
       messages: [],
       channel: null,
@@ -133,6 +134,8 @@ export default {
         this.error = 'No channel is selected';
         return;
       }
+
+      debugger;
       try {
         this.channel = await twitchApi.loadTwitchItem('users', { login: channelSlug });
       } catch (e) {
@@ -147,7 +150,10 @@ export default {
       }
 
       this.loadStreamAndGame();
-      this.registerSocketIo();
+      this.authenticateSocketIo()
+        .then(() => {
+          this.registerSocketIo();
+        });
     },
 
     async loadStreamAndGame() {
@@ -162,6 +168,19 @@ export default {
     },
 
     async authenticateSocketIo() {
+      const {
+        channelSubscriptionId,
+        channelSubscriptionSecret,
+        channelSubscriptionStreamerName,
+        favoriteStreamerUserName,
+      } = this.$store.state.userConfig;
+      debugger;
+      if (channelSubscriptionId && channelSubscriptionSecret
+        && channelSubscriptionStreamerName === favoriteStreamerUserName
+      ) {
+        console.log('Socket.io already authenticated');
+        return;
+      }
       try {
         const { data } = await axios.put('api/subscription', {
           favoriteStreamerUserName: this.channel.login,
@@ -175,6 +194,7 @@ export default {
           favoriteStreamerUserName: this.channel.login,
           channelSubscriptionId: data.channelSubscriptionId,
           channelSubscriptionSecret: data.channelSubscriptionSecret,
+          channelSubscriptionStreamerName: this.channel.login,
         });
       } catch (e) {
         console.error(e);
@@ -184,12 +204,14 @@ export default {
             auth.logout();
           }
         }
+        throw e;
       }
     },
 
     subscriptToChannel() {
       const { channelSubscriptionId, channelSubscriptionSecret } = this.$store.state.userConfig;
 
+      debugger;
       if (!channelSubscriptionId || !channelSubscriptionSecret) {
         return;
       }
@@ -200,14 +222,8 @@ export default {
     },
 
     async registerSocketIo() {
-      const { channelSubscriptionId, channelSubscriptionSecret } = this.$store.state.userConfig;
-      if (!channelSubscriptionId || !channelSubscriptionSecret) {
-        console.log('Could not subscribe to channel');
-        await this.authenticateSocketIo();
-      }
-
       this.socket = io({
-        autoConnect: true,
+        autoConnect: false,
       });
 
       this.socket.on('connect', () => {
@@ -215,6 +231,12 @@ export default {
       });
 
       this.socket.on('twitch_subscribe_unauthorized', () => {
+        this.$store.commit('updateUserConfig', {
+          favoriteStreamerUserName: this.channel.login,
+          channelSubscriptionId: null,
+          channelSubscriptionSecret: null,
+          channelSubscriptionStreamerName: null,
+        });
         this.authenticateSocketIo()
           .then(() => this.subscriptToChannel());
       });
@@ -223,6 +245,7 @@ export default {
         this.messages.push(JSON.parse(message));
       });
 
+      this.socket.connect();
       this.$on('hook:beforeDestroy', () => this.socket.disconnect());
     },
   },

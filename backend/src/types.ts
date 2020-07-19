@@ -64,7 +64,7 @@ export type BroadcastEvent = {
     createdAt: Date,
     details?: { [k: string]: string | number }
 };
-export type BroadCastCallback = (channel: TwitchUserId, payload: BroadcastEvent) => void;
+export type BroadCastCallback = (payload: BroadcastEvent) => void;
 
 export type RespondToWebhookCallback = (status: number, message: string | undefined) => void;
 

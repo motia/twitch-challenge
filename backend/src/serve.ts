@@ -74,9 +74,9 @@ async function main() {
         webhooksSubscriberClient,
         webhookOptions,
         WEBHOOK_HANDLER_LOCAL_PORT,
-        (channelId, event) => {
-            broadcasterClient.broadcast(channelId, event);
-            void eventsRepository.saveEvents(channelId, event as any);
+        event => {
+            broadcasterClient.broadcast(event);
+            void eventsRepository.saveEvents(event);
         },
     );
 

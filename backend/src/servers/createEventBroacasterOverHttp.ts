@@ -9,11 +9,11 @@ const createCommands = (port: number, serverOptions: {io: IBroadcaster} | false)
     return {
         broadcast: new ExpressifyCommand(
             'broadcast',
-            serverOptions ? async ({ channel }, payload) => {
+            serverOptions ? async (_, payload) => {
                 if (typeof payload === 'string') {
                     throw new Error('Payload should not be a string');
                 }
-                serverOptions.io.broadcast(channel, payload as any as BroadcastEvent);
+                serverOptions.io.broadcast(payload as any as BroadcastEvent);
             } : false,
             { baseUrl }
         )
@@ -24,7 +24,7 @@ export const createEventBroacasterHttpClient = function (port: number): IBroadca
     const commands = createCommands(port, false);
 
     return {
-        broadcast: (channel, payload) => commands.broadcast.remoteCall({ channel }, payload)
+        broadcast: payload => commands.broadcast.remoteCall({}, payload)
     };
 };
 

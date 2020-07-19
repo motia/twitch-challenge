@@ -31,7 +31,7 @@ export const createWebhookServer = function (
 
     const app = express();
 
-    app.use(morgan('dev'));
+    app.use(morgan('combined'));
     const path = (parseUrl(webhookOptions.url).pathname || '').replace(/\/$/, '') + '/:webhook';
     app.get(path, async function(req, res) {
         const { webhook } = req.params;
