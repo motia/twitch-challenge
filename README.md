@@ -5,39 +5,57 @@ As we will use the twitch chat and video embeds and we will not need any more da
 -	Second page: includes the embeds and a widget that shows the newest 10 events received via a websocket to the backend.
 
 ## Events list:
-As the list of events that should be displayed in the widget. I have checked the possible events and assumed them relevance.
-The twitch events are provided through this different channels:
-- Chat widget: shows chat, whispers, moderating events, cheers, etc...
+As the list of events that should be displayed in the widget. We have three sources:
+- IRC: shows chat, whispers, moderating events, cheers, subscriptions, etc...
 - PubSub API: the events are already displayed in the chat widget, thus I will not use it
-- Webhook API: provides events for stream, user change and streamer follows, will be delivered using websockets as per specs.
+- Webhook API: provides events for stream changes, user changes and streamer follows.
+
+I will assume these are the events we need to track:
+- stream changes: tracked from webhooks
+- user changes: tracked from webhooks
+- streamer follows: tracked from webhooks
+- subscriptions: tracked from IRC
+
+As we will have to store the events in DB, the IRC should be tracked by BOT.
+
+## Authentication and Session
+The session should persist for 7 days. This is longer then the life time of Twitch access tokens.
+Hence, we will need to use a refresh token using OAuth.
+Basically, the refresh token will be persisted in our session. And the user can request access tokens to use them in direct Twitch Api requests.
+The server will delete the session including the refresh token after 7 days of user inactivity.
 
 ## Backend: 
 Per specs, we need a websockets server which pushes the channel events to users subscribed to it.
 Considering that the events are provided using the Webhooks API we will need a public endpoint that receives the webhooks.
-Summing up all the previous points, I propose the architecture in the attached chart.
+
+
+| Summing up all the previous points, I suggest the following architecture:
+
+![System architecture](/architecture.png)
   
 # Deployment to AWS
-Using a Git monorepo on Github (Gitlab and Bitbucket are fine too) which contains all the code. 
-The build system; Github Actions in this case, will test, build and deploy the different services.
-## Frontend:
-A simple frontend application. (I used a simple vuejs SPA)
-The website can be simply deployed to S3 and additionally Cloudfront
+As scaling to up to 900MM reqs/day in 6 months. We will need to adopt a microservice architecture or a serverlless one as soon as possible. Therfore, I considered separtation concerns in the code, so it is possible to deploy the services without changing the code.
 
-# Scaling:
-For scaling, we will have to switch to a serverless architecture.
-This approach will be easier to scale as we won't have to manage servers.
+Therefore, I have detailed to steps for the deployment.
 
-It should be simple to migrate to the other architecture as the current code has as I split the code to map into AWS service units and separated the infrastructure from the logic.
+## Step 1: vertical scaling on EC2
+For starters, we will need to deploy our code quickl and without worrying much about the CI/CD and adjusting it to scaling. 
+As the backend is split into services, a service for each block in the architcture diagram.
+We can host the backend on an EC2 instance and manage vertical scale it as needed. We will mange the for deployment and process management PM2.
 
-## Subscription
-Clean up subscriptions
+For the frontend, as it is a static web app, we can host it in S3 (then optionally setup CloudFront for it).
 
+## Step2: Switching to serverless
+Next, have to switch to a serverless architecture. This approach will be easier as we will not have to manage servers or customize our toolchain.
+
+By design, the services can be used
 
 ## The services implementation in AWS
 - Websockets server Interface: AWS API gateway websockets
 - Webhook Subscriptions Service: AWS Lambda
 - Webhook Server: AWS Lambda with public access
-- Authentication: either as a Lambda or using AWS Cognito with the Twitch OpenId as a user pool.
+- Public API: using AWS Lambda with DynamoDB for session. Also, AWS Cognito with the Twitch OpenId as a user pool might be an option.
+- IRC bots: the bots must stay connected as long as we have subscriptions to channels. Hence we will always have working servers. We can use Elastic Load Balancing with autoscaled EC2 instances for this service.
 
 ## Scaling the database
 The `events` table which can grow large because of many inserts. As the records are timestamped, we can shard the table by partition the table by range(`created_at ASC`, `streamer_name`, `event_type`).
