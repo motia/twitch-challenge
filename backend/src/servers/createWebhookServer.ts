@@ -1,10 +1,10 @@
 import * as express from 'express';
-import * as getRawBody from 'raw-body';
 import * as morgan from 'morgan';
 import { parse as parseUrl } from 'url';
 import { Server } from 'http';
 import { WebhookOptions, IWebhooksHandler, IStartableService, BroadCastCallback, IWebhooksRepository } from '../types';
 import { handleNotification, handleVerification } from '../createWebhookHandler';
+import bodyParser = require('body-parser');
 
 export const createWebhookServer = function (
     webhookRepository: IWebhooksRepository,
@@ -21,7 +21,7 @@ export const createWebhookServer = function (
     let _server: Server;
     const handler = {
         start: async () => {
-            _server = app.listen(port, host, () => console.log(`[WebhookHandler] listening at http://${host}:${port}`));
+            _server = app.listen(port, () => console.log(`[WebhookHandler] listening at http://${host}:${port}`));
         },
         close: async () => { _server?.close(); },
         broadcast,
@@ -31,8 +31,24 @@ export const createWebhookServer = function (
 
     const app = express();
 
-    app.use(morgan('combined'));
-    app.all((parseUrl(webhookOptions.url).pathname || '') + '/:webhook',
+    app.use(morgan('dev'));
+    const path = (parseUrl(webhookOptions.url).pathname || '').replace(/\/$/, '') + '/:webhook';
+    app.get(path, async function(req, res) {
+        const { webhook } = req.params;
+        if (!webhook) {
+            console.error(`[WebhookSubscriber] received an invalid call on ${req.path}`);
+            respond(res, 404, 'Invalid channel');
+            return;
+        }
+
+        void handler.handleVerification(
+            webhookRepository,
+            webhook,
+            req.query as { [k: string]: string },
+            (status, message) => { respond(res, status, message); }
+        );
+    });
+    app.post(path,
         async function (req, res) {
             const { webhook } = req.params;
             if (!webhook) {
@@ -40,26 +56,19 @@ export const createWebhookServer = function (
                 respond(res, 404, 'Invalid channel');
                 return;
             }
-            if (req.method.toUpperCase() === 'GET') {
-                void handler.handleVerification(
-                    webhookRepository,
-                    webhook,
-                    req.query as { [k: string]: string },
-                    (status, message) => { respond(res, status, message); }
-                );
-            } else if (req.method.toUpperCase() === 'POST') {
+
+            bodyParser.text({ type: '*/*' })(req, res, () => {
+                console.log('Request body as string' , req.body);
                 void handler.handleNotification(
                     webhookRepository,
                     webhookOptions,
                     webhook,
                     req.headers as { [x: string]: string },
-                    req.body ? JSON.parse(await getRawBody(req.body, true)) : '',
+                    req.body,
                     (status, message) => respond(res, status, message),
                     broadcast
                 );
-            } else {
-                respond(res, 405, 'Invalid request method');
-            }
+            });
         });
 
     return handler;

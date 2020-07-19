@@ -1,8 +1,7 @@
 import { WebhookOptions, BroadCastCallback, RespondToWebhookCallback, BroadcastEvent, IWebhooksRepository } from './types';
 import * as crypto from 'crypto';
 
-const parseSubscription = (data: string, secret: string, algoAndSignature: string): boolean => {
-    return true;
+export const parseSubscription = (data: string, secret: string, algoAndSignature: string): boolean => {
     const [algorithm, signature] = algoAndSignature.split('=', 2);
 
     const hash = crypto.createHmac(algorithm, secret).update(data).digest('hex');
@@ -20,7 +19,7 @@ export async function handleVerification(
     respond: RespondToWebhookCallback,
 ): Promise<void> {
     // TODO: add tests to manage failed hook verifiation webhook
-    const webhook = true || await webhooks.findWebhook(webhookId);
+    const webhook = await webhooks.findWebhook(webhookId);
 
     if (webhook) {
         const hubMode = query?.['hub.mode'];
@@ -67,8 +66,8 @@ export async function handleNotification(
             console.debug(`Successfully verified notification signature for hook: ${webhookId}`);
             let event: { [k: string]: string } | null = null;
             try {
-                event = JSON.parse(body) as { [k: string]: string };
-            } catch(e){
+                event = (JSON.parse(body) as { data: { [k: string]: string }[]}).data[0];
+            } catch (e){
                 console.error('Invalid json ', body);
                 return;
             }
@@ -86,7 +85,7 @@ export async function handleNotification(
                 payload = {
                     eventType: type,
                     createdAt: new Date(event.followed_at),
-                    streamerName: event.to_name,
+                    streamerName: webhook.streamerName,
                 };
             } 
             else if (type === 'stream') {
@@ -106,7 +105,7 @@ export async function handleNotification(
                 payload = {
                     eventType: type,
                     createdAt: event.started_at ? new Date(event.started_at) : new Date(),
-                    streamerName: event.user_name,
+                    streamerName: webhook.streamerName,
                 };
             } 
             else if (type === 'user') {
@@ -122,7 +121,7 @@ export async function handleNotification(
                 payload = {
                     eventType: type,
                     createdAt: event.started_at ? new Date(event.started_at) : new Date(),
-                    streamerName: event.user_name,
+                    streamerName: webhook.streamerName,
                 };
             } else {
                 console.warn('Invalid webhook type');

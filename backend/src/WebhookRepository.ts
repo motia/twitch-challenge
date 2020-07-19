@@ -11,9 +11,13 @@ type DBWebhookRecord = { id: number, streamer_name: number, type: WebhookType }
 export class WebhooksRepository implements IWebhooksRepository {
     constructor(private pgPool: Pool) { }
     createWebhook({ streamerName, type }: { type: WebhookType; streamerName: string; }): Promise<WebhookRecord> {
-        return this.query<DBWebhookRecord>(`
-            INSERT INTO webhooks (type, streamer_name) VALUES ($1, $2) RETURNING *
-        `,
+        return this.query<DBWebhookRecord>(
+            'INSERT INTO webhooks (type, streamer_name) VALUES ($1, $2) RETURNING *'
+            // `
+            // INSERT INTO webhooks (type, streamer_name) VALUES ($1, $2)
+            // ON CONFLICT(type, streamer_name) DO UPDATE SET created_at = NOW() RETURNING *;
+            // RETURNING *`
+            ,
             [type, streamerName]
         ).then(res => this._serializeItems(res.rows)[0])
             .catch(e => { console.error(e); throw e; });
