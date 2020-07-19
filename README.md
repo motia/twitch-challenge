@@ -71,8 +71,10 @@ select (
   + (select SUM(archived_events_2000.event_count) WHERE streamer_name = 'A') 
   + (select COUNT(events_3000.id) WHERE streamer_name = 'A')
 )
-```
+``` 
 
+## Deployment
 For deployment and configuration we can use Serverless (https://www.serverless.com).
 
-> The queries to insert and search the events are in the events table are in /backend/src/EventsRepository.ts
+# Queries
+The queries to insert and search the events are in the events table are in both of /queries.sql and /backend/src/EventsRepository.ts

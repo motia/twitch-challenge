@@ -39,9 +39,8 @@ export class EventsRepository {
 
   async countEventsByStreamersAndEventType(): Promise<EventsCountByTypeAndStreamer> {
     return await this.query<{ event_type: string, streamer_name: string, count: number }>(`
-        SELECT count(id) as count, streamer_name, event_type as count from events 
-        where streamer_name = ?
-        GROUP BY streamer_name, event_type
+      SELECT count(id) as count, streamer_name, event_type from events 
+      GROUP BY streamer_name, event_type
     `, []).then(res => res.rows.reduce<EventsCountByTypeAndStreamer>((acc, x) => {
         if (!acc[x.streamer_name]) {
           acc[x.streamer_name] = {};
