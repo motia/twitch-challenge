@@ -38,11 +38,14 @@ SET default_table_access_method
 CREATE TABLE public.events
 (
     id bigint NOT NULL,
-    streamer_name bit varying(200) NOT NULL,
-    event_type bit varying(20) NOT NULL,
-    viewer_name bit varying(200) NOT NULL,
     created_at timestamp
-    without time zone NOT NULL
+    without time zone NOT NULL,
+    viewer_name character varying
+    (200) NOT NULL,
+    streamer_name character varying
+    (200) NOT NULL,
+    event_type character varying
+    (30) NOT NULL
 );
 
 
@@ -112,7 +115,8 @@ CREATE TABLE public.events
             type character varying(20) NOT NULL,
             streamer_name character varying(20) NOT NULL,
             created_at timestamp
-            without time zone NOT NULL DEFAULT NOW()
+            without time zone DEFAULT now
+            () NOT NULL
 );
 
 

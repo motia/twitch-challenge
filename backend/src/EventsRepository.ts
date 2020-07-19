@@ -10,7 +10,7 @@ export class EventsRepository {
   async saveEvents(streamerName: TwitchUserId, event: BroadcastEvent): Promise<void> {
 
     const query = `insert into events (streamer_name, event_type, viewer_name, created_at)
-    SELECT '$1', '$2', subscriptions.viewer_name, $3 
+    SELECT $1, $2, subscriptions.viewer_name, $3 
     from subscriptions WHERE subscriptions.streamer_name = $4`;
 
     const values = [
