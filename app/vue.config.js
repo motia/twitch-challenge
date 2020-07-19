@@ -1,3 +1,7 @@
+if (!process.env.VUE_APP_TWITCH_CLIENT_ID) {
+  throw new Error('VUE_APP_TWITCH_CLIENT_ID is not set');
+}
+
 // vue.config.js
 module.exports = {
   devServer: {
