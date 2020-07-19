@@ -95,6 +95,7 @@ export default {
       game: null,
       hostname: window.location.hostname,
       loading: true,
+      socket: null,
     };
   },
 
@@ -146,7 +147,21 @@ export default {
       }
 
       this.loadStreamAndGame();
+      this.registerSocketIo();
+    },
 
+    async loadStreamAndGame() {
+      this.stream = await twitchApi.loadTwitchItem('streams', {
+        user_login: this.channel.login,
+      });
+      if (this.stream && this.stream.game_id) {
+        this.game = await twitchApi.loadTwitchItem('games', {
+          id: this.stream.game_id,
+        });
+      }
+    },
+
+    async authenticateSocketIo() {
       try {
         const { data } = await axios.put('api/subscription', {
           favoriteStreamerUserName: this.channel.login,
@@ -170,42 +185,45 @@ export default {
           }
         }
       }
-      this.registerSocketIo();
     },
 
-    async loadStreamAndGame() {
-      this.stream = await twitchApi.loadTwitchItem('streams', {
-        user_login: this.channel.login,
-      });
-      if (this.stream && this.stream.game_id) {
-        this.game = await twitchApi.loadTwitchItem('games', {
-          id: this.stream.game_id,
-        });
+    subscriptToChannel() {
+      const { channelSubscriptionId, channelSubscriptionSecret } = this.$store.state.userConfig;
+
+      if (!channelSubscriptionId || !channelSubscriptionSecret) {
+        return;
       }
+      this.socket.emit('twitch_subscribe', {
+        id: this.$store.state.userConfig.channelSubscriptionId,
+        secret: this.$store.state.userConfig.channelSubscriptionSecret,
+      });
     },
 
-    registerSocketIo() {
-      const socket = io({
+    async registerSocketIo() {
+      const { channelSubscriptionId, channelSubscriptionSecret } = this.$store.state.userConfig;
+      if (!channelSubscriptionId || !channelSubscriptionSecret) {
+        console.log('Could not subscribe to channel');
+        await this.authenticateSocketIo();
+      }
+
+      this.socket = io({
         autoConnect: true,
       });
 
-      socket.on('connect', () => {
-        const { channelSubscriptionId, channelSubscriptionSecret } = this.$store.state.userConfig;
-        if (!channelSubscriptionId || !channelSubscriptionSecret) {
-          console.error('Could not subscribe to channel');
-        }
-
-        socket.emit('twitch_subscribe', {
-          id: channelSubscriptionId,
-          secret: channelSubscriptionSecret,
-        });
+      this.socket.on('connect', () => {
+        this.subscriptToChannel();
       });
 
-      socket.on('twitch_event', (message) => {
+      this.socket.on('twitch_subscribe_unauthorized', () => {
+        this.authenticateSocketIo()
+          .then(() => this.subscriptToChannel());
+      });
+
+      this.socket.on('twitch_event', (message) => {
         this.messages.push(JSON.parse(message));
       });
 
-      this.$on('hook:beforeDestroy', () => socket.disconnect);
+      this.$on('hook:beforeDestroy', () => this.socket.disconnect());
     },
   },
 };

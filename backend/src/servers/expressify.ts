@@ -57,7 +57,7 @@ export class ExpressifyCommand<ResponseData> {
             console.info(`[ExpressifyRequest] ${this.method} ${this.baseUrl}/${this.path} success`, data);
             return data;
         } catch (e) {
-            console.error(`[ExpressifyRequest] ${this.method} ${this.baseUrl}/${this.path} failed`, e);
+            console.error(`[ExpressifyRequest] ${this.method} ${this.baseUrl}/${this.path} failed`);
 
             throw e;
         }

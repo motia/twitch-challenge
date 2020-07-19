@@ -5,7 +5,6 @@ const validatestreamerName = (streamerName: string | number) => {
     return !!streamerName;
 };
 
-
 export const createEventBroacaster = function(
     webhooksSubscriber: IWebhooksSubscriber,
     client: ISubscriptionGuard,
@@ -13,7 +12,7 @@ export const createEventBroacaster = function(
 ): IBroadcaster & IStartableService {
     const io = socketIo({});
 
-    const usersSubscriptions = new Map<string, string>();
+    const subscriptionBySocketId = new Map<string, string>();
 
     io.on('connection', ws => {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -34,14 +33,14 @@ export const createEventBroacaster = function(
                 console.log(`[Broadcaster] subscribing to channel ${authorization.streamerName}`);
                 ws.leaveAll();
                 ws.join(`channel.${authorization.streamerName}`);
-                usersSubscriptions.set(ws.id, subscriptionSecret);
+                subscriptionBySocketId.set(ws.id, subscriptionId);
             } else {
                 console.log(`[Broadcaster] Attempted subscribing to an invalid channel Id ${authorization.streamerName}`);
             }
         });
 
         ws.on('disconnecting', function () {
-            const subId = usersSubscriptions.get(ws.id);
+            const subId = subscriptionBySocketId.get(ws.id);
             ws.leaveAll();
             if (subId) {
                 void webhooksSubscriber.removeSubscription(subId);
