@@ -70,13 +70,19 @@ export class WebhooksSubscriber implements IWebhooksSubscriber, IStartableServic
         const newSubscription = await this.subscriptions.addSubscription({
             userName,
             streamerName,
+        }).catch(e => {
+            console.error('Error creating subscription', e);
+            throw e;
         });
+
 
         const webhookIds = (await Promise.all([
             await this.createWebhook({ type: WebhookType.follow, streamerName }),
             await this.createWebhook({ type: WebhookType.stream, streamerName }),
             await this.createWebhook({ type: WebhookType.user, streamerName }),
         ])).map(x => x.id);
+
+        console.log('Registering webhooks ', webhookIds);
 
         if (this.enableApiCalls) {
             await Promise.all([
@@ -92,7 +98,9 @@ export class WebhooksSubscriber implements IWebhooksSubscriber, IStartableServic
                     channelId,
                     this.getWebhoookOpts(webhookIds[2])
                 ),
-            ]);
+            ]).catch(e => {
+                console.error('Created subscript but failed to registe webhooks');
+            });
         }
 
         return newSubscription;
