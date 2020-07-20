@@ -100,7 +100,7 @@ export default {
 
   data() {
     return {
-      enableEmbeds: false, // true, // for debug only
+      enableEmbeds: true, // for debug only
       error: null,
       messages: [],
       channel: null,

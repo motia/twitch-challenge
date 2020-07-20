@@ -71,7 +71,7 @@ export default {
 
   data() {
     return {
-      channel: this.$store.state.userConfig.favoriteStreamerUserName || '' || 'benjyfishy',
+      channel: this.$store.state.userConfig.favoriteStreamerUserName || '',
     };
   },
 
