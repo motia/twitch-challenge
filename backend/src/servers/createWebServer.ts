@@ -20,14 +20,14 @@ export const createSubscriptionGuard = (
       subscriptionId,
     }): Promise<{ authorized: false; } | { streamerName: string; authorized: true; }> {
       try {
-        const {data} = await axios.request<{streamerName: string}>({
+        const {data} = await axios.request<{authorized: boolean, streamerName: string}>({
           method: 'GET',
           baseURL: `http://localhost:${WEBSERVER_PORT}`,
           url: `subscriptions/authorize?secret=${subscriptionSecret}&id=${subscriptionId}`
         });
         const streamerName = data.streamerName;
     
-        return { authorized: true, streamerName };
+        return { authorized: data.authorized, streamerName };
       } catch(e) {
         return { authorized: false };
       }

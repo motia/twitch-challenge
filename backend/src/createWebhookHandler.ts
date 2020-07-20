@@ -85,6 +85,9 @@ export async function handleNotification(
                     eventType: type,
                     createdAt: new Date(event.followed_at),
                     streamerName: webhook.streamerName,
+                    details: {
+                        followerName: event.from_name,
+                    }
                 };
             } 
             else if (type === 'stream') {
@@ -105,6 +108,10 @@ export async function handleNotification(
                     eventType: type,
                     createdAt: event.started_at ? new Date(event.started_at) : new Date(),
                     streamerName: webhook.streamerName,
+                    details: {
+                        action: event.started_at ? 'started' : 'stopped',
+                        title: event.title,
+                    }
                 };
             } 
             else if (type === 'user') {
@@ -121,6 +128,10 @@ export async function handleNotification(
                     eventType: type,
                     createdAt: event.started_at ? new Date(event.started_at) : new Date(),
                     streamerName: webhook.streamerName,
+                    details: {
+                        description: event.description,
+                        displayName: event.display_name,
+                    }
                 };
             } else {
                 console.warn('Invalid webhook type');

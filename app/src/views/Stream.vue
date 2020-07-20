@@ -54,17 +54,29 @@
         </div>
 
         <div class="column">
-          <div class="card">
-            <div class="card-header">
-              <div class="card-header-title">
-                Events
+          <nav class="panel">
+            <p class="panel-heading">
+              Events
+            </p>
+            <a class="panel-block"
+              :class="{'is-active': i === 1 }"
+              v-for="(m, i) in messages"
+              :key="i"
+            >
+              <span class="panel-icon">
+                <i class="fas fa-book" aria-hidden="true"></i>
+              </span>
+              <div class="level is-mobile" style="width: 100%;">
+                <div class="level-left">
+                  {{ m.text }}
+                </div>
+                <div class="level-right">
+                  {{ m.createdAt.substr(14, 5) }}
+                </div>
               </div>
-            </div>
-            <div class="card-content">
-              {{ messages }}
-              <!-- TODO: Add events here -->
-            </div>
-          </div>
+            </a>
+          </nav>
+
         </div>
       </div>
       <LoadingIndicator v-else-if="loading" />
@@ -135,7 +147,6 @@ export default {
         return;
       }
 
-      debugger;
       try {
         this.channel = await twitchApi.loadTwitchItem('users', { login: channelSlug });
       } catch (e) {
@@ -174,7 +185,6 @@ export default {
         channelSubscriptionStreamerName,
         favoriteStreamerUserName,
       } = this.$store.state.userConfig;
-      debugger;
       if (channelSubscriptionId && channelSubscriptionSecret
         && channelSubscriptionStreamerName === favoriteStreamerUserName
       ) {
@@ -211,7 +221,6 @@ export default {
     subscriptToChannel() {
       const { channelSubscriptionId, channelSubscriptionSecret } = this.$store.state.userConfig;
 
-      debugger;
       if (!channelSubscriptionId || !channelSubscriptionSecret) {
         return;
       }
@@ -242,7 +251,28 @@ export default {
       });
 
       this.socket.on('twitch_event', (message) => {
-        this.messages.push(JSON.parse(message));
+        let text = '';
+        debugger;
+        if (message.eventType === 'follow') {
+          text = `${message.details.followerName} has started following ${this.channel.login}!`;
+        } else if (message.eventType === 'stream') {
+          text = `The ${message.details.title} stream has ${message.details.action}!`;
+        } else if (message.eventType === 'user' && message.details.displayName !== this.channel.displayName) {
+          text = `The ${this.channel.display_name} has changed his display name to ${message.details.displayName}!`;
+        } else if (message.type === 'user' && message.details.description !== this.channel.description) {
+          text = `The ${message.details.displayName} has updated his description!`;
+        }
+        console.log('New event', text, message);
+        if (!text) {
+          return;
+        }
+        if (this.messages.length > 10) {
+          this.messages.pop();
+        }
+        this.messages.unshift({
+          ...message,
+          text,
+        });
       });
 
       this.socket.connect();

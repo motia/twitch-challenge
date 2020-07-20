@@ -48,7 +48,6 @@ export default new Vuex.Store({
       });
     },
     updateUserConfig(state, config) {
-      debugger;
       Object.assign(state.userConfig, config);
       Object.keys(config).forEach((x) => {
         if (config[x]) {
@@ -57,7 +56,6 @@ export default new Vuex.Store({
           window.localStorage.removeItem(x);
         }
       });
-      debugger;
     },
   },
 });

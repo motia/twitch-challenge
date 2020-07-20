@@ -40,11 +40,7 @@ export const createEventBroacaster = function(
         });
 
         ws.on('disconnecting', function () {
-            const subId = subscriptionBySocketId.get(ws.id);
             ws.leaveAll();
-            if (subId) {
-                void webhooksSubscriber.removeSubscription(subId);
-            }
         });
     });
 
