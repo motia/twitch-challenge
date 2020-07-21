@@ -63,14 +63,11 @@
               v-for="(m, i) in messages"
               :key="i"
             >
-              <span class="panel-icon">
-                <i class="fas fa-book" aria-hidden="true"></i>
-              </span>
-              <div class="level is-mobile" style="width: 100%;">
-                <div class="level-left">
+              <div class="columns" style="width: 100%;">
+                <div class="column">
                   {{ m.text }}
                 </div>
-                <div class="level-right">
+                <div class="column is-narrow">
                   {{ m.createdAt.substr(14, 5) }}
                 </div>
               </div>
